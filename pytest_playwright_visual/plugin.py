@@ -3,7 +3,7 @@ import os
 import shutil
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Union
 import pytest
 from PIL import Image
 from pixelmatch.contrib.PIL import pixelmatch
@@ -15,7 +15,7 @@ def assert_snapshot(pytestconfig: Any, request: Any, browser_name: str) -> Calla
     test_dir = str(Path(request.node.name)).split("[", 1)[0]
 
     def compare(
-        img: bytes,
+        img_or_page: Union[bytes, Any],
         *,
         threshold: float | None = None,
         name=f"{test_name}.png",
@@ -30,6 +30,13 @@ def assert_snapshot(pytestconfig: Any, request: Any, browser_name: str) -> Calla
         global_threshold = float(ini_threshold)
         # Use global threshold if no local threshold provided
         threshold = threshold if threshold is not None else global_threshold
+
+        # Handle either bytes or page reference
+        img = (
+            img_or_page
+            if isinstance(img_or_page, bytes)
+            else img_or_page.screenshot(animations="disabled")
+        )
 
         test_file_name = str(os.path.basename(Path(request.node.fspath))).strip(".py")
         filepath = (
