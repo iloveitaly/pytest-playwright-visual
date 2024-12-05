@@ -10,6 +10,10 @@ from pixelmatch.contrib.PIL import pixelmatch
 
 from playwright.sync_api import Page as SyncPage
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 @pytest.fixture
 def assert_snapshot(pytestconfig: Any, request: Any, browser_name: str) -> Callable:
@@ -55,16 +59,20 @@ def assert_snapshot(pytestconfig: Any, request: Any, browser_name: str) -> Calla
             Path(request.node.fspath).parent.resolve() / "snapshot_tests_failures"
         )
         test_results_dir = results_dir_name / test_file_name / test_name
+
         # Remove a single test's past run dir with actual, diff and expected images
         if test_results_dir.exists():
             shutil.rmtree(test_results_dir)
+
         if update_snapshot:
             file.write_bytes(img)
             pytest.fail("--> Snapshots updated. Please review images")
         if not file.exists():
+            logger.info("Creating new snapshot(s):", name)
+
             file.write_bytes(img)
-            # pytest.fail(
             pytest.fail("--> New snapshot(s) created. Please review images")
+
         img_a = Image.open(BytesIO(img))
         img_b = Image.open(file)
         img_diff = Image.new("RGBA", img_a.size)
