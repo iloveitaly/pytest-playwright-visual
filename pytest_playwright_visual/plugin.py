@@ -8,6 +8,8 @@ import pytest
 from PIL import Image
 from pixelmatch.contrib.PIL import pixelmatch
 
+from playwright.sync_api import Page as SyncPage
+
 
 @pytest.fixture
 def assert_snapshot(pytestconfig: Any, request: Any, browser_name: str) -> Callable:
@@ -31,12 +33,13 @@ def assert_snapshot(pytestconfig: Any, request: Any, browser_name: str) -> Calla
         # Use global threshold if no local threshold provided
         threshold = threshold if threshold is not None else global_threshold
 
-        # Handle either bytes or page reference
-        img = (
-            img_or_page
-            if isinstance(img_or_page, bytes)
-            else img_or_page.screenshot(animations="disabled")
-        )
+        # If page reference is passed, use screenshot
+        if isinstance(img_or_page, SyncPage):
+            img = img_or_page.screenshot(
+                animations="disabled", type="jpeg", quality=100
+            )
+        else:
+            img = img_or_page
 
         test_file_name = str(os.path.basename(Path(request.node.fspath))).strip(".py")
         filepath = (
