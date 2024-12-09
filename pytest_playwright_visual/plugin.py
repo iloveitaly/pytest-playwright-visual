@@ -17,7 +17,11 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture
 def assert_snapshot(pytestconfig: Any, request: Any, browser_name: str) -> Callable:
-    test_name = f"{str(Path(request.node.name))}[{str(sys.platform)}]"
+    if True:
+        test_name = f"{str(Path(request.node.name))}"
+    else:
+        test_name = f"{str(Path(request.node.name))}[{str(sys.platform)}]"
+
     test_dir = str(Path(request.node.name)).split("[", 1)[0]
 
     def compare(
