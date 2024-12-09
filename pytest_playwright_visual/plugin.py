@@ -66,12 +66,10 @@ def assert_snapshot(pytestconfig: Any, request: Any, browser_name: str) -> Calla
 
         if update_snapshot:
             file.write_bytes(img)
-            pytest.fail("--> Snapshots updated. Please review images")
+            pytest.fail(f"--> Snapshots updated. Please review images. {file}")
         if not file.exists():
-            logger.info("Creating new snapshot(s):", name)
-
             file.write_bytes(img)
-            pytest.fail("--> New snapshot(s) created. Please review images")
+            pytest.fail(f"--> New snapshot(s) created. Please review images. {file}")
 
         img_a = Image.open(BytesIO(img))
         img_b = Image.open(file)
