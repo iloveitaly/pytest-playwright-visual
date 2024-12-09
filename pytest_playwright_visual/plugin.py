@@ -37,6 +37,14 @@ def assert_snapshot(pytestconfig: Any, request: Any, browser_name: str) -> Calla
         ini_threshold = pytestconfig.inicfg.get(
             "playwright_visual_snapshot_threshold", "0.1"
         )
+
+        playwright_visual_failure_directory = Path(
+            pytestconfig.inicfg.get(
+                "playwright_visual_failure_directory",
+                str(Path(request.node.fspath).parent.resolve()),
+            )
+        )
+
         global_threshold = float(ini_threshold)
         # Use global threshold if no local threshold provided
         threshold = threshold if threshold is not None else global_threshold
@@ -60,7 +68,7 @@ def assert_snapshot(pytestconfig: Any, request: Any, browser_name: str) -> Calla
         file = filepath / name
         # Create a dir where all snapshot test failures will go
         results_dir_name = (
-            Path(request.node.fspath).parent.resolve() / "snapshot_tests_failures"
+            playwright_visual_failure_directory / "snapshot_tests_failures"
         )
         test_results_dir = results_dir_name / test_file_name / test_name
 
