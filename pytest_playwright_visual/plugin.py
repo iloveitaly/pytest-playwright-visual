@@ -1,3 +1,4 @@
+import os
 import sys
 import shutil
 from io import BytesIO
@@ -14,6 +15,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def is_ci_environment() -> bool:
+    return "GITHUB_ACTIONS" in os.environ
+
+
 def pytest_addoption(parser: Any) -> None:
     group = parser.getgroup("playwright-snapshot", "Playwright Snapshot")
     group.addoption(
@@ -26,11 +31,7 @@ def pytest_addoption(parser: Any) -> None:
 
 @pytest.fixture
 def assert_snapshot(pytestconfig: Any, request: Any, browser_name: str) -> Callable:
-    if True:
-        test_name = f"{str(Path(request.node.name))}"
-    else:
-        test_name = f"{str(Path(request.node.name))}[{str(sys.platform)}]"
-
+    test_name = f"{str(Path(request.node.name))}[{str(sys.platform)}]"
     test_dir = str(Path(request.node.name)).split("[", 1)[0]
 
     snapshots_path = (
@@ -102,6 +103,7 @@ def assert_snapshot(pytestconfig: Any, request: Any, browser_name: str) -> Calla
         if update_snapshot:
             file.write_bytes(img)
             pytest.fail(f"--> Snapshots updated. Please review images. {file}")
+
         if not file.exists():
             file.write_bytes(img)
             pytest.fail(f"--> New snapshot(s) created. Please review images. {file}")
@@ -121,6 +123,10 @@ def assert_snapshot(pytestconfig: Any, request: Any, browser_name: str) -> Calla
             img_diff.save(f"{test_results_dir}/Diff_{name}")
             img_a.save(f"{test_results_dir}/Actual_{name}")
             img_b.save(f"{test_results_dir}/Expected_{name}")
+
+            if is_ci_environment():
+                file.write_bytes(img)
+
             pytest.fail("--> Snapshots DO NOT match!")
 
     return compare
