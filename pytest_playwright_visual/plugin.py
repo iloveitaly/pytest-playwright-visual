@@ -33,6 +33,15 @@ def assert_snapshot(pytestconfig: Any, request: Any, browser_name: str) -> Calla
 
     test_dir = str(Path(request.node.name)).split("[", 1)[0]
 
+    snapshots_path = (
+        pytest.snapshots_path if hasattr(pytest, "snapshots_path") else None
+    )
+    snapshot_failures_path = (
+        pytest.snapshot_failures_path
+        if hasattr(pytest, "snapshot_failures_path")
+        else None
+    )
+
     def compare(
         img_or_page: Union[bytes, Any],
         *,
@@ -71,7 +80,7 @@ def assert_snapshot(pytestconfig: Any, request: Any, browser_name: str) -> Calla
 
         test_file_name = Path(request.node.fspath).stem
 
-        filepath = (
+        filepath = snapshots_path or (
             Path(request.node.fspath).parent.resolve()
             / "snapshots"
             / test_file_name
@@ -81,7 +90,7 @@ def assert_snapshot(pytestconfig: Any, request: Any, browser_name: str) -> Calla
 
         file = filepath / name
         # Create a dir where all snapshot test failures will go
-        results_dir_name = (
+        results_dir_name = snapshot_failures_path or (
             playwright_visual_failure_directory / "snapshot_tests_failures"
         )
         test_results_dir = results_dir_name / test_file_name / test_name
