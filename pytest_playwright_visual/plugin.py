@@ -1,5 +1,4 @@
 import sys
-import os
 import shutil
 from io import BytesIO
 from pathlib import Path
@@ -13,6 +12,16 @@ from playwright.sync_api import Page as SyncPage
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def pytest_addoption(parser: Any) -> None:
+    group = parser.getgroup("playwright-snapshot", "Playwright Snapshot")
+    group.addoption(
+        "--update-snapshots",
+        action="store_true",
+        default=False,
+        help="Update snapshots.",
+    )
 
 
 @pytest.fixture
@@ -52,12 +61,16 @@ def assert_snapshot(pytestconfig: Any, request: Any, browser_name: str) -> Calla
         # If page reference is passed, use screenshot
         if isinstance(img_or_page, SyncPage):
             img = img_or_page.screenshot(
-                animations="disabled", type="jpeg", quality=100
+                animations="disabled",
+                type="jpeg",
+                quality=100,
+                mask=[img_or_page.locator('[data-clerk-component="UserButton"]')],
             )
         else:
             img = img_or_page
 
-        test_file_name = str(os.path.basename(Path(request.node.fspath))).strip(".py")
+        test_file_name = Path(request.node.fspath).stem
+
         filepath = (
             Path(request.node.fspath).parent.resolve()
             / "snapshots"
@@ -65,6 +78,7 @@ def assert_snapshot(pytestconfig: Any, request: Any, browser_name: str) -> Calla
             / test_dir
         )
         filepath.mkdir(parents=True, exist_ok=True)
+
         file = filepath / name
         # Create a dir where all snapshot test failures will go
         results_dir_name = (
@@ -89,6 +103,7 @@ def assert_snapshot(pytestconfig: Any, request: Any, browser_name: str) -> Calla
         mismatch = pixelmatch(
             img_a, img_b, img_diff, threshold=threshold, fail_fast=fail_fast
         )
+
         if mismatch == 0:
             return
         else:
@@ -100,13 +115,3 @@ def assert_snapshot(pytestconfig: Any, request: Any, browser_name: str) -> Calla
             pytest.fail("--> Snapshots DO NOT match!")
 
     return compare
-
-
-def pytest_addoption(parser: Any) -> None:
-    group = parser.getgroup("playwright-snapshot", "Playwright Snapshot")
-    group.addoption(
-        "--update-snapshots",
-        action="store_true",
-        default=False,
-        help="Update snapshots.",
-    )
