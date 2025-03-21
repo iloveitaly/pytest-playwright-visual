@@ -34,10 +34,10 @@ def assert_snapshot(pytestconfig: Any, request: Any, browser_name: str) -> Calla
     test_dir = str(Path(request.node.name)).split("[", 1)[0]
 
     snapshots_path = (
-        pytest.snapshots_path if hasattr(pytest, "snapshots_path") else None
+        Path(pytest.snapshots_path) if hasattr(pytest, "snapshots_path") else None
     )
     snapshot_failures_path = (
-        pytest.snapshot_failures_path
+        Path(pytest.snapshot_failures_path)
         if hasattr(pytest, "snapshot_failures_path")
         else None
     )
